@@ -9,6 +9,7 @@ class Store {
     this.callback = callback;
     this.action = { type: "INITIAL_ACTION" };
     this.state = callback(this.initialState, this.action);
+    this.subscribers = [];
   }
 
   getState() {
@@ -17,9 +18,21 @@ class Store {
 
   dispatch(action) {
     if (action.type) {
-      this.state = this.callback(this.state, action)
+      this.state = this.callback(this.state, action);
+      this.subscribers.forEach((subscribe) => subscribe(action, this.state))
     } else {
       throw Error("Action should be has type");
+    }
+  }
+
+  subscribe(listener) {
+    this.subscribers.push(listener)
+    const THIS = this;
+    return function unsubscribe() {
+      const listenerIndex = THIS.subscribers.findIndex((sub) => sub === listener);
+      if (listenerIndex !== -1) {
+        THIS.subscribers.splice(listenerIndex, 1);
+      }
     }
   }
 }
@@ -55,18 +68,31 @@ const user = {
     email: "ali@mail.com"
   }
 
+
+
 const store = new Store(customReducer);
 
-console.log(store.getState())
+const listener1 = (action, state) => { console.log(1) }
+const unsubscribe1 = store.subscribe(listener1);
+
+const listener2 = (action, state) => { console.log(state) }
+const unsubscribe2 = store.subscribe(listener2);
+
+const listener3 = (action, state) => { console.log(3) }
+const unsubscribe3 = store.subscribe(listener3);
+
+store.dispatch({ type: 'ACTION1' })
+
+unsubscribe3();
+store.dispatch({ type: 'ACTION2' })
+
+unsubscribe1();
+store.dispatch({ type: 'ACTION3' })
+
+
 
 store.dispatch({ type: "SET_LOADING", payload: true })
 
-console.log(store.getState())
-
 store.dispatch({ type: "SET_USER", payload: user })
 
-console.log(store.getState())
-
 store.dispatch({ type: "BLA_BLA", payload: true })
-
-console.log(store.getState())
