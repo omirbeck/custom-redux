@@ -27,12 +27,8 @@ class Store {
 
   subscribe(listener) {
     this.subscribers.push(listener)
-    const THIS = this;
-    return function unsubscribe() {
-      const listenerIndex = THIS.subscribers.findIndex((sub) => sub === listener);
-      if (listenerIndex !== -1) {
-        THIS.subscribers.splice(listenerIndex, 1);
-      }
+    return () => {
+      this.subscribers = this.subscribers.filter((sub) => sub !== listener);
     }
   }
 }
